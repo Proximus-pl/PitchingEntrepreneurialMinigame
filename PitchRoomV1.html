@@ -1,0 +1,1202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Pitch Room: Entrepreneur Edition</title>
+  <style>
+    :root {
+      --bg: #0f1724;
+      --bg-deep: #071025;
+      --card: #0b1220;
+      --accent: #7c3aed;
+      --accent-light: #a78bfa;
+      --muted: #94a3b8;
+      --white: #e6eef7;
+      --border: rgba(255, 255, 255, 0.08);
+      
+      /* Scoring Colors */
+      --c-red: #ef4444;    
+      --c-orange: #f97316; 
+      --c-yellow: #eab308; 
+      --c-lgreen: #84cc16; 
+      --c-green: #10b981;  
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, sans-serif; }
+    
+    html, body { height: 100%; background: linear-gradient(180deg, var(--bg-deep) 0%, #071839 100%); color: var(--white); }
+    
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; height: 100%; display: flex; flex-direction: column; }
+
+    /* --- Header --- */
+    .game-header { display: none; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+    .audience-stats { display: flex; flex-direction: column; gap: 4px; }
+    .meter-container { display: flex; align-items: center; gap: 10px; }
+    .meter-label { width: 120px; font-size: 12px; color: var(--muted); text-align: right; }
+    .meter { width: 200px; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; }
+    .meter .fill { height: 100%; transition: width 0.5s ease, background 0.5s ease; }
+    
+    .header-actions { display: flex; gap: 12px; align-items: center; }
+    .header-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--muted); width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .header-btn:hover { background: var(--accent); color: white; }
+    
+    .stat-box { text-align: right; margin-right: 12px; }
+    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; }
+    .stat-val { font-weight: 800; font-size: 18px; }
+
+    /* --- Screens --- */
+    .screen { display: none; flex-grow: 1; flex-direction: column; }
+    .screen.active { display: flex; }
+    
+    .center-screen { justify-content: center; align-items: center; text-align: center; gap: 24px; }
+    input[type="text"] { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; text-align: center; font-size: 16px; width: 250px; }
+
+    /* Game List Screen */
+    .game-list-container { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 12px; }
+    .game-save-item { background: var(--card); border: 1px solid var(--border); padding: 16px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .game-save-item.completed { border-color: var(--c-green); background: rgba(16, 185, 129, 0.05); }
+    .game-info h4 { font-size: 16px; margin-bottom: 4px; }
+    .game-info p { font-size: 12px; color: var(--muted); }
+
+    /* Tutorial Screen */
+    .tutorial-box { max-width: 700px; width: 100%; text-align: left; background: var(--card); padding: 32px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    .tut-step { margin-bottom: 20px; display: flex; gap: 16px; }
+    .tut-icon { background: rgba(255,255,255,0.05); min-width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; border: 1px solid var(--border); }
+    
+    /* Intro Screen */
+    .intro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 800px; width: 100%; }
+    .intro-card { background: var(--card); border: 1px solid var(--border); padding: 20px; border-radius: 12px; display: flex; gap: 16px; align-items: center; text-align: left; }
+    .intro-avatar { font-size: 40px; width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; background: rgba(255,255,255,0.05); border-radius: 50%; }
+
+    /* Craft */
+    .craft-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; flex-grow: 1; height: 0; }
+    .panel { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; overflow: hidden; }
+    .scroll-area { overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 8px; padding-right: 5px; }
+    
+    .card-item { background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
+    .card-item:hover { background: rgba(255,255,255,0.06); }
+
+    /* Perform */
+    .perform-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; flex-grow: 1; }
+    .question-box { background: linear-gradient(180deg, rgba(255,255,255,0.04), transparent); border: 1px solid var(--border); border-radius: 16px; padding: 32px; margin-bottom: 24px; min-height: 150px; display: flex; align-items: center; justify-content: center; text-align: center; flex-direction: column;}
+    .answers-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .question-hint { font-size: 13px; color: var(--muted); margin-top: 16px; font-style: italic; background: rgba(255,255,255,0.05); padding: 8px 16px; border-radius: 6px; border: 1px solid var(--border); max-width: 90%; display: inline-block; }
+    .question-text { font-size: 18px; line-height: 1.5; max-width: 90%; }
+
+    /* Investors Live */
+    .investors-sidebar { display: flex; flex-direction: column; gap: 12px; }
+    .investor-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px; display: flex; align-items: center; gap: 12px; transition: all 0.3s ease; }
+    
+    .investor-avatar-wrapper { position: relative; width: 54px; height: 54px; }
+    .investor-avatar { width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; border: 2px solid var(--border); background: #222; position: relative; z-index: 2; }
+    .avatar-pulse { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; background: var(--accent); opacity: 0; z-index: 1; }
+    
+    @keyframes pulse-anim {
+        0% { transform: scale(1); opacity: 0.6; }
+        100% { transform: scale(1.5); opacity: 0; }
+    }
+    .reacting .avatar-pulse { animation: pulse-anim 1s ease-out infinite; }
+
+    .reaction-badge { font-size: 11px; padding: 4px 8px; border-radius: 4px; margin-top: 4px; display: inline-block; font-weight: 600; width: 100%; text-align: left;}
+    .investor-needs { font-size: 10px; color: var(--muted); margin-top: 2px; font-style: italic;}
+
+    .tip-box { background: rgba(255, 255, 255, 0.05); border: 1px dashed var(--border); border-radius: 8px; padding: 12px; display: flex; gap: 10px; align-items: center; margin-top: 16px; }
+    
+    /* Reaction States */
+    .react-listening { background: transparent; color: var(--muted); border: 1px dashed var(--border); text-align: center; width: 100%;}
+    .react-good { background: rgba(16, 185, 129, 0.15); color: var(--c-green); border: 1px solid var(--c-green); }
+    .react-ok { background: rgba(234, 179, 8, 0.15); color: var(--c-yellow); border: 1px solid var(--c-yellow); }
+    .react-confused { background: rgba(249, 115, 22, 0.15); color: var(--c-orange); border: 1px solid var(--c-orange); }
+    .react-bad { background: rgba(239, 68, 68, 0.15); color: var(--c-red); border: 1px solid var(--c-red); }
+
+    /* Feedback */
+    .feedback-container { overflow-y: auto; padding-right: 10px; }
+    .score-banner { text-align: center; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border); background: rgba(255,255,255,0.03); }
+    .big-score { font-size: 48px; font-weight: 800; margin: 10px 0; }
+    .feedback-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+    .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+    .metric-tile { background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 8px; text-align: center; position: relative;}
+    
+    /* Tooltip Styles */
+    .tooltip-text {
+      visibility: hidden;
+      width: 180px;
+      background-color: #1f2937;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 10px;
+      position: absolute;
+      z-index: 10;
+      bottom: 110%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .metric-tile:hover .tooltip-text { visibility: visible; }
+    .tooltip-text::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: #1f2937 transparent transparent transparent;
+    }
+
+    /* Analytics Dashboard */
+    .analytics-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 20px; } /* Changed to 1 column */
+    .chart-box { height: 300px; display: flex; align-items: flex-end; justify-content: space-around; padding-top: 20px; border-bottom: 1px solid var(--border); border-left: 1px solid var(--border); position: relative; margin: 20px; }
+    
+    /* Simple CSS Line Chart points */
+    .line-point { width: 12px; height: 12px; background: var(--c-green); border-radius: 50%; position: absolute; border: 2px solid #fff; box-shadow: 0 0 10px var(--c-green); z-index: 2; }
+    .line-label { position: absolute; bottom: -25px; font-size: 10px; color: var(--muted); transform: translateX(-50%); white-space: nowrap; }
+    .line-score-label { position: absolute; top: -20px; font-size: 10px; color: white; transform: translateX(-50%); font-weight: bold; }
+
+    /* Controls */
+    .btn { padding: 12px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;}
+    .btn-green { background: var(--c-green); color: #071025; }
+    .btn-green:hover { background: #34d399; }
+    .btn-sec { background: rgba(255,255,255,0.1); color: white; }
+    .btn-sec:hover { background: rgba(255,255,255,0.2); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; background: #333; color: #666; }
+    .ans-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--white); text-align: left; padding: 16px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 15px; line-height: 1.4; }
+    .ans-btn:hover:not(:disabled) { background: var(--accent); border-color: var(--accent-light); }
+
+    /* User Delete Button */
+    .delete-user-btn { width: 24px; height: 24px; border-radius: 50%; background: rgba(239, 68, 68, 0.2); color: var(--c-red); border: 1px solid var(--c-red); display: flex; align-items: center; justify-content: center; cursor: pointer; margin-left: 12px; font-size: 12px; transition: all 0.2s; }
+    .delete-user-btn:hover { background: var(--c-red); color: white; }
+
+    /* Modals */
+    .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 100; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: #111827; padding: 32px; border-radius: 16px; max-width: 600px; width: 90%; border: 1px solid var(--border); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); }
+    .modal h2 { color: var(--accent-light); margin-bottom: 16px; }
+    
+    /* Skill Tree - Modal */
+    .skill-tree { display: flex; flex-direction: column; gap: 8px; }
+    .skill { display: flex; justify-content: space-between; gap: 8px; align-items: center; font-size: 14px; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 6px;}
+    .skill .progress { height: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 4px; width: 120px; overflow: hidden;}
+    .skill .progress .p { height: 100%; background: linear-gradient(90deg, #7c3aed, #60a5fa); }
+
+    /* User List */
+    .user-item { display: flex; justify-content: space-between; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 8px; align-items: center; }
+  </style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="game-header" id="gameHeader">
+    <div class="audience-stats">
+      <div class="meter-container">
+        <div class="meter-label">Funding Confidence</div>
+        <div class="meter"><div class="fill" id="engFill" style="width: 0%; background: var(--c-green);"></div></div>
+      </div>
+      <div class="meter-container">
+        <div class="meter-label">Pitch Progress</div>
+        <div class="meter"><div class="fill" id="progFill" style="width: 0%; background: var(--accent);"></div></div>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center;">
+      <div class="stat-box">
+        <div class="stat-label">Bank</div>
+        <div class="stat-val" id="totalScoreDisplay">0</div>
+      </div>
+      <div class="header-actions">
+        <button class="header-btn" title="Save Game" onclick="game.promptSave()">💾</button>
+        <button class="header-btn" title="Users" onclick="game.openUserModal()">👤</button>
+        <button class="header-btn" title="Objective" onclick="game.openHelp()">❓</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen active center-screen" id="screen-login">
+    <h1 style="font-size: 42px; color: var(--accent-light);">Pitch Room <br><span style="font-size:24px; color:white; font-weight:400">Entrepreneur Edition</span></h1>
+    <input type="text" id="nicknameInput" placeholder="Enter Founder Name" />
+    <button class="btn btn-green" onclick="game.login()">Enter Lobby</button>
+  </div>
+
+  <div class="screen center-screen" id="screen-games-list">
+    <h2>Select a Session</h2>
+    <div class="game-list-container" id="gameListArea"></div>
+    <button class="btn btn-green" onclick="game.startNewGame()">+ Start New Venture</button>
+  </div>
+
+  <div class="screen center-screen" id="screen-tutorial">
+    <div class="tutorial-box">
+        <h2 style="color:var(--accent-light); margin-bottom:24px; border-bottom:1px solid var(--border); padding-bottom:12px;">Mission Briefing</h2>
+        <div class="tut-step">
+            <div class="tut-icon">🃏</div>
+            <div>
+                <h4 style="margin-bottom:4px;">1. Build Your Deck</h4>
+                <p style="font-size:14px; color:var(--muted);">Select 5 topic slides (Market, Product, Team, etc.) that you are confident presenting.</p>
+            </div>
+        </div>
+        <div class="tut-step">
+            <div class="tut-icon">👥</div>
+            <div>
+                <h4 style="margin-bottom:4px;">2. Read the Room</h4>
+                <p style="font-size:14px; color:var(--muted);">Each investor has specific needs. Tailor your answers to satisfy them.</p>
+            </div>
+        </div>
+        <div class="tut-step">
+            <div class="tut-icon">🎯</div>
+            <div>
+                <h4 style="margin-bottom:4px;">3. Secure Funding</h4>
+                <p style="font-size:14px; color:var(--muted);">Keep "Funding Confidence" high. Avoid vague answers.</p>
+            </div>
+        </div>
+        <div style="text-align:right; margin-top:32px;">
+            <button class="btn btn-green" onclick="game.endTutorial()">I'm Ready. Start Pitching &rarr;</button>
+        </div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-craft">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h2>Build Your Deck <span style="font-size:14px; color:var(--muted)">(Select 5)</span></h2>
+        <button class="btn btn-sec" onclick="game.resetDeck()">Reset Deck</button>
+    </div>
+    <div class="craft-container">
+      <div class="panel">
+        <h3 style="margin-bottom:12px">Available Slides</h3>
+        <div class="scroll-area" id="availableCards"></div>
+      </div>
+      <div class="panel">
+        <h3 style="margin-bottom:12px">Selected Slides <span id="deckCount">(0/5)</span></h3>
+        <div class="scroll-area" id="selectedCards"></div>
+        <button class="btn btn-green" id="btnPresent" disabled style="margin-top: 16px;" onclick="game.showInvestorIntro()">Present to Board</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen center-screen" id="screen-intro">
+      <h2 style="color:var(--accent-light); margin-bottom:20px;">Meet Your New Board</h2>
+      <div class="intro-grid" id="introGrid">
+          </div>
+      <button class="btn btn-green" style="margin-top:32px; font-size:18px; padding:16px 32px;" onclick="game.startQA()">Begin Pitch</button>
+  </div>
+
+  <div class="screen" id="screen-perform">
+    <div class="perform-layout">
+      <div class="panel" style="justify-content: center;">
+        <div class="question-box">
+          <div class="question-text" id="qText">Loading...</div>
+          <div class="question-hint" id="qHint"></div>
+        </div>
+        <div class="answers-grid" id="answersArea"></div>
+      </div>
+      
+      <div class="investors-sidebar">
+          <div id="investorList" style="display:flex; flex-direction:column; gap:12px;"></div>
+          <div class="tip-box">
+              <div style="font-size:24px;">🔔</div>
+              <div style="font-size:12px; color:var(--muted);"><strong>Tip:</strong> The goal is to keep the investors satisfied by addressing their specific needs.</div>
+          </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-feedback">
+    <div class="feedback-container">
+      
+      <div class="score-banner" id="scoreBanner">
+        <div style="text-transform:uppercase; letter-spacing:1px; font-size:12px;">Pitch Performance Score</div>
+        <div class="big-score" id="fbScore">0</div>
+        <div style="font-style:italic; color:var(--white)" id="fbCaption"></div>
+      </div>
+
+      <div class="metrics-grid" id="metricsGrid"></div>
+
+      <div class="feedback-cols">
+        <div class="panel">
+          <h4 style="color:var(--c-green); margin-bottom:10px;">What Went Well</h4>
+          <ul style="padding-left:16px; font-size:14px; line-height:1.5;" id="listGood"></ul>
+        </div>
+        <div class="panel">
+          <h4 style="color:var(--c-orange); margin-bottom:10px;">Areas to Improve</h4>
+          <ul style="padding-left:16px; font-size:14px; line-height:1.5;" id="listBad"></ul>
+        </div>
+      </div>
+      
+      <h4 style="margin-bottom:10px;">Investor Summary <small style="font-weight:400; color:var(--muted)">(Hover for info)</small></h4>
+       <div class="metrics-grid" id="investorQuotes" style="grid-template-columns: 1fr 1fr;"></div>
+
+      <div style="display:flex; gap:16px; margin-top:20px; padding-bottom:40px; justify-content: space-between; flex-wrap: wrap;">
+        <div>
+            <button class="btn btn-sec" id="btnReport" style="display:none;" onclick="game.openReport()">📄 Print Detailed Report</button>
+        </div>
+        <div style="display:flex; gap:12px;">
+            <button class="btn btn-sec" onclick="game.promptSkillTree()">🌳 View Skill Tree</button>
+            <button class="btn btn-green" onclick="game.nextRound()">Start Next Round (New Board)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-analytics">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2>Performance Analytics</h2>
+        <button class="btn btn-sec" onclick="game.closeAnalytics()">Close Analytics</button>
+    </div>
+    
+    <div class="metrics-grid" style="margin-top:20px;">
+        <div class="metric-tile"><div>Rounds</div><div class="metric-val" id="anRounds">0</div></div>
+        <div class="metric-tile"><div>Avg Score</div><div class="metric-val" id="anAvg">0</div></div>
+        <div class="metric-tile"><div>Best Score</div><div class="metric-val" id="anBest">0</div></div>
+        <div class="metric-tile"><div>Trend</div><div class="metric-val" id="anTrend">-</div></div>
+    </div>
+
+    <div class="analytics-grid">
+        <div class="panel">
+            <h4>Overall Progress (Score per Round)</h4>
+            <div class="chart-box" id="lineChart">
+                <div style="position:absolute; bottom:0; width:100%; border-bottom:1px solid var(--border); font-size:10px; color:var(--muted);">0%</div>
+                <div style="position:absolute; bottom:25%; width:100%; border-bottom:1px dashed rgba(255,255,255,0.1); font-size:10px; color:var(--muted);">25%</div>
+                <div style="position:absolute; bottom:50%; width:100%; border-bottom:1px dashed rgba(255,255,255,0.1); font-size:10px; color:var(--muted);">50%</div>
+                <div style="position:absolute; bottom:75%; width:100%; border-bottom:1px dashed rgba(255,255,255,0.1); font-size:10px; color:var(--muted);">75%</div>
+                <div style="position:absolute; top:0; width:100%; border-bottom:1px dashed rgba(255,255,255,0.1); font-size:10px; color:var(--muted);">100%</div>
+            </div>
+            <p style="text-align:center; font-size:12px; color:var(--muted); margin-top:10px;">Are you improving over time?</p>
+        </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-users">
+    <div class="modal">
+        <h2>User Profiles</h2>
+        <div id="userListContainer"></div>
+        <div style="margin-top:16px; display:flex; justify-content:space-between;">
+            <button class="btn btn-green" onclick="game.addUser()">+ Add User</button>
+            <button class="btn btn-sec" onclick="game.closeModal('modal-users')">Close</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-delete-confirm">
+    <div class="modal">
+        <h2 style="color:var(--c-red)">Delete Account?</h2>
+        <p>Are you sure you want to delete this account? This action cannot be undone.</p>
+        <div style="display:flex; gap:12px; margin-top:20px; justify-content:flex-end;">
+            <button class="btn btn-sec" onclick="game.closeModal('modal-delete-confirm')">No</button>
+            <button class="btn btn-green" style="background:var(--c-red); color:white;" onclick="game.confirmDeleteUser()">Yes, Delete</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-help">
+    <div class="modal">
+        <h2>Objective</h2>
+        <p>Secure funding by keeping engagement & investor interest >80%. Answer Q&A carefully—satisfy specific investor needs to raise your confidence meter.</p>
+        <button class="btn btn-sec" style="margin-top:20px;" onclick="game.closeModal('modal-help')">Got it</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-save">
+    <div class="modal">
+        <h2>Save Progress?</h2>
+        <p>Do you want to save your current session?</p>
+        <div style="display:flex; gap:12px; margin-top:20px; justify-content:flex-end;">
+            <button class="btn btn-sec" onclick="game.closeModal('modal-save')">No</button>
+            <button class="btn btn-green" onclick="game.saveGame()">Yes</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-skill-prompt">
+    <div class="modal">
+        <h2>Unlock Skill Tree?</h2>
+        <p>Accessing the Mastery Skill Tree costs <strong>500 Points</strong>.</p>
+        <p style="font-size:12px; color:var(--muted); margin-top:8px;">Current Points: <span id="stCurrentPoints"></span></p>
+        <div style="display:flex; gap:12px; margin-top:20px; justify-content:flex-end;">
+            <button class="btn btn-sec" onclick="game.closeModal('modal-skill-prompt')">Cancel</button>
+            <button class="btn btn-green" id="btnUnlockTree" onclick="game.unlockSkillTree()">Unlock (-500)</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-skill-view">
+    <div class="modal">
+        <h2>Mastery Skills</h2>
+        <div class="skill-tree" id="skillTreeList"></div>
+        <div style="display:flex; justify-content:space-between; margin-top:20px;">
+            <button class="btn btn-sec" onclick="game.openAnalytics()">View Analytics</button>
+            <button class="btn btn-sec" onclick="game.closeModal('modal-skill-view')">Close</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-report">
+    <div class="modal">
+        <h2 style="color:var(--c-red)">Critical Failure Report</h2>
+        <div class="panel" style="margin-bottom:16px;">
+            <h4>Strategic Gaps</h4>
+            <ul id="reportList" style="padding-left:20px; color:var(--muted); font-size:14px;"></ul>
+        </div>
+        <button class="btn btn-sec" style="margin-top:20px; width:100%" onclick="game.closeModal('modal-report')">Close Report</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-reward">
+    <div class="modal" style="text-align:center;">
+        <div style="font-size:40px;">🎆</div>
+        <h2 style="color:var(--c-green)">Perfect Execution!</h2>
+        <p>You achieved 100% in a key metric.</p>
+        <button class="btn btn-green" style="margin-top:20px;" onclick="game.claimReward()">Claim 100 Points</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-win">
+    <div class="modal" style="text-align:center;">
+        <div style="font-size:40px;">🏆</div>
+        <h2 style="color:var(--c-green)">Congratulations!</h2>
+        <p>You scored 100/100. You are a great entrepreneur!</p>
+        <button class="btn btn-green" style="margin-top:20px;" onclick="game.endGameWin()">Try Another Game</button>
+    </div>
+</div>
+
+
+<script>
+/* Investor Pool */
+const INVESTORS = [
+  // Originals
+  { id: 'john', name: 'John Whitney', avatar:'👨‍🦳', needs:'Needs Safety & Logic', color: '#4b5563', traits: ['safe','profit','logic'], hate: ['hype','risk'] },
+  { id: 'mary', name: 'Mary Aundery', avatar:'👩', needs:'Needs Ethics & Team', color: '#db2777', traits: ['team','ethics','people'], hate: ['arrogant','greedy'] },
+  { id: 'lambert', name: 'Lambert Bukowski', avatar:'👨‍🦰', needs:'Needs Data & Scale', color: '#ea580c', traits: ['data','scale','tech'], hate: ['fluff','vague'] },
+  { id: 'celline', name: 'Celline Murphy', avatar:'👱‍♀️', needs:'Needs Vision & Speed', color: '#7c3aed', traits: ['speed','risk','vision'], hate: ['slow','safe'] },
+  
+  
+  { id: 'marcus', name: 'Marcus Steel', avatar:'🦈', needs:'Needs Profit & Scale', color: '#111827', traits: ['profit','scale','greedy'], hate: ['ethics','vague','safe'] },
+  { id: 'elena', name: 'Elena Vogue', avatar:'💅', needs:'Needs Hype & Vision', color: '#ec4899', traits: ['hype','vision','people'], hate: ['data','boring','tech'] },
+  { id: 'aris', name: 'Dr. Aris', avatar:'🎓', needs:'Needs Data & Logic', color: '#0ea5e9', traits: ['data','logic','tech'], hate: ['hype','speed','vague'] },
+  { id: 'brody', name: 'Brody Maverick', avatar:'🚀', needs:'Needs Speed & Risk', color: '#f59e0b', traits: ['speed','risk','hype'], hate: ['safe','logic','slow'] },
+  { id: 'sarah', name: 'Sarah Green', avatar:'🌿', needs:'Needs Ethics & Impact', color: '#10b981', traits: ['ethics','safe','people'], hate: ['greedy','risk','profit'] },
+  { id: 'wei', name: 'Wei Chen', avatar:'🌏', needs:'Needs Scale & Vision', color: '#8b5cf6', traits: ['scale','vision','speed'], hate: ['safe','slow','ethics'] },
+  { id: 'arthur', name: 'Arthur Sterling', avatar:'🧐', needs:'Needs Safety & Profit', color: '#78716c', traits: ['safe','profit','logic'], hate: ['risk','vision','hype'] },
+  { id: 'hana', name: 'Hana Ryu', avatar:'🤖', needs:'Needs Tech & Product', color: '#6366f1', traits: ['tech','logic','vision'], hate: ['marketing','profit','fluff'] }
+];
+
+const CARDS = [
+  { id: 'market', title: 'Market Size', desc: 'TAM/SAM/SOM analysis.' },
+  { id: 'product', title: 'Product Demo', desc: 'Live functionality show.' },
+  { id: 'team', title: 'Team & Culture', desc: 'Founders and values.' },
+  { id: 'traction', title: 'Metrics', desc: 'Growth and user data.' },
+  { id: 'vision', title: 'Roadmap', desc: 'Future expansion plans.' },
+  { id: 'finance', title: 'Business Model', desc: 'Revenue and margins.' },
+  { id: 'comp', title: 'Competition', desc: 'Moats and landscape.' },
+  { id: 'ask', title: 'The Ask', desc: 'Funding requirements.' }
+];
+
+/* Investor Reponses */
+const QUESTIONS = {
+  market: [{
+      q: "I'm looking at your market sizing. It seems quite ambitious. Did you rely on broad top-down analyst reports, or did you build this bottom-up from verified customer segments that you've actually tested?", 
+      hint: "TAM (Total Addressable Market) validation. Safety investors need logic; Scale investors need data.",
+      ans:[
+        {t:"We extrapolated from global analyst reports which show the sector hitting $50B next year.", tag:['vague','fluff'], fbBad: "Relying on generic analyst reports is considered lazy. Data-driven investors hate this."},
+        {t:"We calculated it bottom-up: 50k verified SMBs in our region x $100/month avg value.", tag:['data','logic'], fbGood: "Your bottom-up calculation using verified local data provided the hard evidence needed to trust your math."},
+        {t:"The market doesn't exist yet—we are creating it. We will capture 100% of the demand.", tag:['vision','risk'], fbGood: "Claiming to create a market is bold. It excited Visionary investors, but scared Safety investors."}
+      ]
+  }],
+  product: [{
+      q: "Your technology looks interesting, but I'm worried about copycats. What is your defensible moat? Is it intellectual property, or just a first-mover advantage that will fade?", 
+      hint: "Defensibility (Moats). Ethics investors like people/team; Speed investors want execution.",
+      ans:[
+        {t:"We have filed 3 provisional patents on our core algorithm and locked key IP.", tag:['safe','tech'], fbGood: "Securing patents was a smart move. It gave Safety investors comfort that your product is defensible."},
+        {t:"We ship code faster than anyone. By the time they copy us, we'll be version 3.0.", tag:['speed','risk'], fbGood: "Your focus on execution speed thrilled Risk investors, who believe velocity is the only real defense."},
+        {t:"It's our secret sauce. We just have a better vibe and cooler design than them.", tag:['hype','vague'], fbBad: "Calling your strategy a 'secret sauce' without explanation is risky. It sounded like fluff."}
+      ]
+  }],
+  team: [{
+      q: "I see you have a strong sales background, but you are missing a technical co-founder or CTO. How do you plan to build a scalable tech platform without engineering leadership?", 
+      hint: "Team Composition. People investors care about grit; Tech investors care about competence.",
+      ans:[
+        {t:"We will hire an agency to build it for now and find a CTO later when we are rich.", tag:['safe'], fbBad: "Outsourcing your core product to an agency suggests you don't view technology as a core competency."},
+        {t:"I spent the last 6 months learning to code and built the MVP myself to understand the stack.", tag:['speed','people'], fbGood: "Demonstrating that you learned to code yourself showed grit and dedication to the team's success."},
+        {t:"Tech doesn't matter as much as sales. We can sell anything, even if it's broken.", tag:['profit','arrogant'], fbBad: "Claiming 'tech doesn't matter' was arrogant. You insulted Tech investors and Quality-focused investors."}
+      ]
+  }],
+  traction: [{
+      q: "Your churn rate is currently 5%, which is dangerously high for SaaS. Why are customers leaving, and what is your specific plan to fix this leaky bucket before you scale?", 
+      hint: "Retention. Safety investors hate risk; People investors care about happiness.",
+      ans:[
+        {t:"We are actively firing bad-fit customers to improve our margins and focus on ideal profiles.", tag:['logic','profit'], fbGood: "Framing high churn as a strategic decision to 'fire bad customers' showed you care about long-term profitability."},
+        {t:"It's just seasonal. People cancel in the summer. It will probably come back down.", tag:['vague'], fbBad: "Blaming 'seasonality' without data sounded like an excuse. The board felt you were dodging the root cause."},
+        {t:"We are running A/B pricing tests and interviewing every cancelled user to gather data.", tag:['data','learning'], fbGood: "Your commitment to interviewing cancelled users showed you are data-driven and willing to learn."}
+      ]
+  }],
+  vision: [{
+      q: "Let's look 10 years into the future. Are you building this to sell to Google in 2 years, or are you trying to build an independent legacy company that dominates the industry?", 
+      hint: "Long-term alignment. Scale investors want world domination; Safety investors want dividends.",
+      ans:[
+        {t:"We want to build a sustainable business that pays dividends and protects shareholder value.", tag:['safe','profit'], fbGood: "Your focus on dividends and safety appealed to conservative investors, though it bored the risk-takers."},
+        {t:"We are going to crush every competitor and become the monopoly of this sector.", tag:['vision','scale'], fbGood: "Your ruthless ambition to dominate the industry aligned perfectly with Scale-focused investors."},
+        {t:"Honestly, we just want to flip this for $50M as fast as possible and retire on a beach.", tag:['greedy'], fbBad: "Admitting you just want a 'quick flip' made investors question your commitment to the mission."}
+      ]
+  }],
+  finance: [{
+      q: "Your Customer Acquisition Cost (CAC) is currently higher than your Lifetime Value (LTV). You are losing money on every sale. How does the math work?", 
+      hint: "Unit Economics. Profit investors need logic; Risk investors accept burn for growth.",
+      ans:[
+        {t:"Once we hit scale, the costs will drop. We just need to burn cash to get big fast.", tag:['scale','risk'], fbGood: "Betting on scale to fix economics is risky, but Risk investors loved the aggressive growth mindset."},
+        {t:"We are optimizing our ad channels and have a clear path to positive unit economics in 3 months.", tag:['logic'], fbGood: "You calmed fears by providing a specific timeline (3 months) for profitability."},
+        {t:"We are banking on a viral video making us famous so we don't have to pay for ads.", tag:['people','vision'], fbBad: "Relying on 'going viral' is not a strategy, it's a lottery ticket. Serious investors found this reckless."}
+      ]
+  }],
+  comp: [{
+      q: "What happens if a giant like Google or Apple decides to enter this space tomorrow? They have unlimited resources and you have almost none. How do you survive?", 
+      hint: "Competition. People investors want loyalty; Tech investors want advantage.",
+      ans:[
+        {t:"We focus on a specific vertical niche that is too small for Google to care about yet.", tag:['safe','logic'], fbGood: "Focusing on a niche showed you are realistic and risk-averse, protecting you from the giants."},
+        {t:"We are simply smarter and faster than them. Big companies are dinosaurs.", tag:['arrogant'], fbBad: "Calling Google a 'dinosaur' was incredibly arrogant. It made you look naive about the power of big tech."},
+        {t:"Our customers love us. We build personal relationships that big tech can't automate.", tag:['people','ethics'], fbGood: "Investors loved your focus on human relationships. It's a valid defense against impersonal big tech."}
+      ]
+  }],
+  ask: [{
+      q: "You are asking for $2 Million. That is a significant amount of dilution. Can you break down exactly how this buys you 18 months of runway and what milestones you will hit?", 
+      hint: "Use of Funds. Safety investors want runway; Data investors want milestones.",
+      ans:[
+        {t:"This covers 18 months of engineering salaries to hit $1M ARR, based on our spreadsheet.", tag:['safe','data'], fbGood: "Tying funding directly to an ARR milestone with a clear runway calculation satisfied the need for data."},
+        {t:"We need a big war chest to aggressively market and drown out the competition.", tag:['speed','risk'], fbGood: "Speed investors approved of the 'war chest' approach, showing you are ready to fight for share."},
+        {t:"We need it for operations, office space, and general miscellaneous growth things.", tag:['vague'], fbBad: "Listing 'general miscellaneous things' as a use of funds was a red flag. You need to know where every dollar goes."}
+      ]
+  }]
+};
+
+const INITIAL_SKILLS = { communication: 10, confidence: 10, critical: 10, decision: 10, vocal: 10 };
+
+/* Game Core */
+const game = {
+  users: [], 
+  currentUserIndex: -1,
+  userToDeleteIndex: -1,
+  
+  // Session State
+  currentGame: null,
+  qQueue: [],
+  qIndex: 0,
+  investorStates: {},
+  sessionLog: [], // Store detailed feedback logs here
+
+  init: () => {
+    const savedUsers = localStorage.getItem('pitchGameUsers');
+    if(savedUsers) game.users = JSON.parse(savedUsers);
+    game.switchScreen('screen-login');
+    game.renderCards();
+  },
+
+  /* USER MANAGEMENT */
+  login: () => {
+    const name = document.getElementById('nicknameInput').value.trim();
+    if(!name) return;
+    
+    let idx = game.users.findIndex(u => u.name === name);
+    if(idx === -1) {
+        // UnlockedTree flag is initialized as false
+        game.users.push({ name, totalPoints: 0, skills: {...INITIAL_SKILLS}, unlockedTree: false, savedGames: [] });
+        idx = game.users.length - 1;
+    } else {
+        // Compatibility: Ensure existing users have the flag
+        if(typeof game.users[idx].unlockedTree === 'undefined') {
+            game.users[idx].unlockedTree = false;
+        }
+    }
+    game.currentUserIndex = idx;
+    game.showGameList();
+    game.saveSystem();
+  },
+  
+  openUserModal: () => {
+      const container = document.getElementById('userListContainer');
+      container.innerHTML = '';
+      game.users.forEach((u, i) => {
+          container.innerHTML += `
+            <div class="user-item">
+                <div>
+                    <strong>${u.name}</strong> <small>(${u.totalPoints} pts)</small>
+                    ${u.unlockedTree ? '<span style="font-size:10px; color:var(--accent-light); margin-left:5px;">🏆 VIP</span>' : ''}
+                </div>
+                <div style="display:flex; align-items:center;">
+                    ${i !== game.currentUserIndex ? `<button class="btn btn-sec" onclick="game.switchUser(${i})">Switch</button>` : '<span style="color:var(--c-green)">Active</span>'}
+                    <div class="delete-user-btn" onclick="game.deleteUser(${i})">X</div>
+                </div>
+            </div>`;
+      });
+      document.getElementById('modal-users').classList.add('active');
+  },
+  
+  deleteUser: (idx) => {
+      game.userToDeleteIndex = idx;
+      // Close user modal temporarily and show confirm modal
+      document.getElementById('modal-users').classList.remove('active');
+      document.getElementById('modal-delete-confirm').classList.add('active');
+  },
+  
+  confirmDeleteUser: () => {
+      if(game.userToDeleteIndex === -1) return;
+      
+      // Check if deleting current user
+      const isCurrent = (game.userToDeleteIndex === game.currentUserIndex);
+      
+      game.users.splice(game.userToDeleteIndex, 1);
+      game.saveSystem();
+      
+      document.getElementById('modal-delete-confirm').classList.remove('active');
+      
+      if(game.users.length === 0 || isCurrent) {
+          // Logout if empty or current user deleted
+          game.currentUserIndex = -1;
+          game.switchScreen('screen-login');
+      } else {
+          // Adjust index if needed and reopen modal
+          if(game.currentUserIndex > game.userToDeleteIndex) game.currentUserIndex--;
+          game.openUserModal();
+      }
+      game.userToDeleteIndex = -1;
+  },
+
+  addUser: () => {
+      document.getElementById('modal-users').classList.remove('active');
+      document.getElementById('nicknameInput').value = '';
+      game.switchScreen('screen-login');
+  },
+
+  switchUser: (idx) => {
+      game.currentUserIndex = idx;
+      document.getElementById('modal-users').classList.remove('active');
+      game.showGameList();
+  },
+
+  /* Game List */
+  showGameList: () => {
+      const user = game.users[game.currentUserIndex];
+      document.getElementById('totalScoreDisplay').innerText = user.totalPoints;
+      const list = document.getElementById('gameListArea');
+      list.innerHTML = '';
+      
+      if(user.savedGames.length === 0) {
+          list.innerHTML = '<div style="text-align:center; color:var(--muted)">No saved ventures. Start a new one!</div>';
+      } else {
+          user.savedGames.forEach((g, i) => {
+              list.innerHTML += `
+                <div class="game-save-item ${g.completed ? 'completed' : ''}">
+                    <div class="game-info">
+                        <h4>${g.completed ? 'Completed Venture' : 'Venture In Progress'}</h4>
+                        <p>Round: ${g.round} | Score: ${g.score} | ${g.completed ? '✅ Finished' : '💾 Saved'}</p>
+                    </div>
+                    ${!g.completed ? `<button class="btn btn-sec" onclick="game.resumeGame(${i})">Resume</button>` : ''}
+                </div>`;
+          });
+      }
+      game.switchScreen('screen-games-list');
+  },
+
+  startNewGame: () => {
+      game.currentGame = {
+          id: Date.now(),
+          completed: false,
+          round: 1,
+          score: 0,
+          deck: [],
+          history: [],
+          boardIds: [] // Will hold the 4 active investor IDs
+      };
+      // Roll random investors for this new game
+      game.rollBoard();
+      
+      game.switchScreen('screen-tutorial');
+  },
+
+  endTutorial: () => {
+      game.switchScreen('screen-craft');
+      game.updateDeckUI();
+      document.getElementById('gameHeader').style.display = 'flex';
+  },
+
+  resumeGame: (idx) => {
+      game.currentGame = game.users[game.currentUserIndex].savedGames[idx];
+      // Backward compatibility check for old saves that don't have boardIds
+      if(!game.currentGame.boardIds) {
+          game.rollBoard();
+      }
+      game.switchScreen('screen-craft'); 
+      game.updateDeckUI();
+      document.getElementById('gameHeader').style.display = 'flex';
+  },
+
+  /* Cards Selection */
+  renderCards: () => {
+    const c = document.getElementById('availableCards');
+    c.innerHTML = '';
+    CARDS.forEach(card => {
+        c.innerHTML += `<div class="card-item">
+            <div><strong>${card.title}</strong><br><small style="color:var(--muted)">${card.desc}</small></div>
+            <button class="btn btn-sec" onclick="game.addCard('${card.id}')">+</button>
+        </div>`;
+    });
+  },
+
+  addCard: (id) => {
+      if(game.currentGame.deck.includes(id) || game.currentGame.deck.length >= 5) return;
+      game.currentGame.deck.push(id);
+      game.updateDeckUI();
+  },
+
+  resetDeck: () => {
+      game.currentGame.deck = [];
+      game.updateDeckUI();
+  },
+
+  updateDeckUI: () => {
+      const c = document.getElementById('selectedCards');
+      c.innerHTML = '';
+      document.getElementById('deckCount').innerText = `(${game.currentGame.deck.length}/5)`;
+      document.getElementById('btnPresent').disabled = game.currentGame.deck.length !== 5;
+      
+      game.currentGame.deck.forEach(id => {
+          const card = CARDS.find(x=>x.id===id);
+          c.innerHTML += `<div class="card-item">
+            <div>${card.title}</div>
+            <button class="btn btn-sec" onclick="game.removeCard('${card.id}')">&times;</button>
+        </div>`;
+      });
+  },
+
+  /* Logic used by the investors */
+  rollBoard: () => {
+      // Shuffle investors and pick 4
+      const shuffled = [...INVESTORS].sort(() => 0.5 - Math.random());
+      game.currentGame.boardIds = shuffled.slice(0, 4).map(i => i.id);
+  },
+
+  showInvestorIntro: () => {
+      const grid = document.getElementById('introGrid');
+      grid.innerHTML = '';
+      
+      game.currentGame.boardIds.forEach(id => {
+          const inv = INVESTORS.find(i => i.id === id);
+          grid.innerHTML += `
+            <div class="intro-card">
+              <div class="intro-avatar" style="background:${inv.color}">${inv.avatar}</div>
+              <div>
+                  <h4>${inv.name}</h4>
+                  <p style="font-size:13px; color:var(--muted); margin-top:4px;">${inv.needs}</p>
+              </div>
+          </div>`;
+      });
+
+      game.switchScreen('screen-intro');
+  },
+
+  /* Q&A */
+  startQA: () => {
+      game.switchScreen('screen-perform');
+      
+      // Reset Round Data
+      game.qQueue = [];
+      game.sessionLog = []; // Clear logs
+      game.currentGame.deck.forEach(id => {
+          const pool = QUESTIONS[id];
+          const q = pool[Math.floor(Math.random()*pool.length)];
+          q.topic = CARDS.find(x=>x.id===id).title;
+          game.qQueue.push(q);
+      });
+      
+      game.qIndex = 0;
+      game.investorStates = {};
+      
+      // Initialize states ONLY for current board members
+      game.currentGame.boardIds.forEach(id => {
+          game.investorStates[id] = { score: 50, reaction: 'listening' };
+      });
+      
+      document.getElementById('progFill').style.width = '0%';
+      document.getElementById('engFill').style.width = '0%';
+      
+      game.renderInvestors();
+      game.loadQuestion();
+  },
+
+  renderInvestors: () => {
+      const div = document.getElementById('investorList');
+      div.innerHTML = '';
+      
+      // Render ONLY current board members
+      game.currentGame.boardIds.forEach(id => {
+          const inv = INVESTORS.find(i => i.id === id);
+          const s = game.investorStates[id];
+          
+          let cls = 'react-listening'; 
+          let txt = 'Listening...';
+          let emoji = '';
+
+          if(s.reaction === 'awesome') { cls = 'react-good'; txt = 'Sounds great. Keep it up!'; emoji = '😃'; }
+          else if(s.reaction === 'potential') { cls = 'react-ok'; txt = 'Sounds good, but needs clarification.'; emoji = '🤔'; }
+          else if(s.reaction === 'unsure') { cls = 'react-confused'; txt = "I'm not too sure about it."; emoji = '😕'; }
+          else if(s.reaction === 'clear') { cls = 'react-bad'; txt = 'That does not sound promising.'; emoji = '😢'; }
+
+          div.innerHTML += `
+            <div class="investor-card ${s.reaction !== 'listening' ? 'reacting' : ''}">
+                <div class="investor-avatar-wrapper">
+                    <div class="avatar-pulse"></div>
+                    <div class="investor-avatar" style="background:${inv.color}">${inv.avatar}</div>
+                </div>
+                <div style="flex-grow:1">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="font-weight:bold; font-size:14px;">${inv.name}</div>
+                        <div style="font-size:16px;">${emoji}</div>
+                    </div>
+                    <div class="investor-needs">${inv.needs}</div>
+                    <div class="reaction-badge ${cls}">${txt}</div>
+                </div>
+            </div>`;
+      });
+  },
+
+  loadQuestion: () => {
+      // 1. Reset investors
+      game.currentGame.boardIds.forEach(id => {
+          game.investorStates[id].reaction = 'listening';
+      });
+      game.renderInvestors(); 
+
+      // 2. Load Question
+      const q = game.qQueue[game.qIndex];
+      document.getElementById('qText').innerHTML = `<small style="color:var(--accent-light); text-transform:uppercase">${q.topic}</small><br>${q.q}`;
+      document.getElementById('qHint').innerText = "💡 Context: " + q.hint;
+      
+      const area = document.getElementById('answersArea');
+      area.innerHTML = '';
+      q.ans.forEach(a => {
+          const btn = document.createElement('button');
+          btn.className = 'ans-btn';
+          btn.innerText = a.t;
+          btn.onclick = () => game.handleAnswer(a);
+          area.appendChild(btn);
+      });
+  },
+
+  handleAnswer: (ans) => {
+      const tags = ans.tag;
+      let totalInvScore = 0;
+      
+      // Iterate ONLY through current board IDs
+      game.currentGame.boardIds.forEach(id => {
+          const inv = INVESTORS.find(i => i.id === id);
+          let delta = 0;
+          let r = 'listening';
+
+          if(tags.some(t => inv.traits.includes(t))) { 
+              delta = 15; 
+              r = 'awesome'; 
+          }
+          else if(tags.some(t => inv.hate.includes(t)) || tags.includes('arrogant')) { 
+              delta = -20; 
+              r = 'clear'; 
+          }
+          else if(tags.includes('vague') || tags.includes('fluff')) { 
+              delta = -5; 
+              r = 'unsure'; 
+          }
+          else {
+              delta = 5; 
+              r = 'potential'; 
+          }
+          
+          game.investorStates[id].score = Math.max(0, Math.min(100, game.investorStates[id].score + delta));
+          game.investorStates[id].reaction = r;
+          totalInvScore += game.investorStates[id].score;
+      });
+      
+      if(ans.fbGood) game.sessionLog.push({ type: 'good', msg: ans.fbGood });
+      if(ans.fbBad) game.sessionLog.push({ type: 'bad', msg: ans.fbBad });
+      
+      game.renderInvestors();
+      
+      const avg = totalInvScore / 4;
+      document.getElementById('engFill').style.width = avg + '%';
+      
+      const progress = ((game.qIndex + 1) / 5) * 100;
+      document.getElementById('progFill').style.width = progress + '%';
+
+      if(game.qIndex >= 4) {
+          setTimeout(game.finishRound, 2000);
+      } else {
+          game.qIndex++;
+          setTimeout(game.loadQuestion, 2000);
+      }
+  },
+
+  finishRound: () => {
+      let totalInvScore = 0;
+      game.currentGame.boardIds.forEach(id => totalInvScore += game.investorStates[id].score);
+      const avgScore = Math.round(totalInvScore / 4);
+      
+      game.currentGame.history.push({
+          round: game.currentGame.round,
+          score: avgScore,
+          metrics: {Confidence: avgScore}, 
+          investors: JSON.parse(JSON.stringify(game.investorStates))
+      });
+      game.currentGame.score += avgScore; 
+      
+      // Update User Total Points
+      game.users[game.currentUserIndex].totalPoints += avgScore;
+
+      // Dynamic Skill Level Up
+      
+      if(avgScore > 50) {
+        const user = game.users[game.currentUserIndex];
+        const skillKeys = Object.keys(user.skills);
+        // Pick a random skill to upgrade
+        const randomSkill = skillKeys[Math.floor(Math.random() * skillKeys.length)];
+        // Add 1 level, max 20
+        user.skills[randomSkill] = Math.min(20, user.skills[randomSkill] + 1);
+      }
+
+      document.getElementById('totalScoreDisplay').innerText = game.users[game.currentUserIndex].totalPoints;
+      game.saveSystem();
+
+      game.switchScreen('screen-feedback');
+      
+      const scoreEl = document.getElementById('fbScore');
+      scoreEl.innerText = avgScore;
+      scoreEl.style.color = game.getColor(avgScore);
+      document.getElementById('fbCaption').innerText = avgScore > 80 ? "Excellent work!" : avgScore < 40 ? "Critical issues found." : "Good effort.";
+      
+      let uniqueGood = [...new Set(game.sessionLog.filter(l => l.type === 'good').map(i => i.msg))];
+      let uniqueBad = [...new Set(game.sessionLog.filter(l => l.type === 'bad').map(i => i.msg))];
+      
+      let displayGood = [];
+      let displayBad = [];
+
+      if(avgScore >= 80) {
+          displayGood = uniqueGood.slice(0, 5);
+          displayBad = uniqueBad.slice(0, 1);
+      } else if (avgScore >= 50) {
+          displayGood = uniqueGood.slice(0, 3);
+          displayBad = uniqueBad.slice(0, 2);
+      } else {
+          displayGood = uniqueGood.slice(0, 1);
+          displayBad = uniqueBad.slice(0, 5);
+      }
+
+      document.getElementById('listGood').innerHTML = displayGood.length ? displayGood.map(x=>`<li>${x}</li>`).join('') : '<li>Standard performance. Nothing specific stood out.</li>';
+      document.getElementById('listBad').innerHTML = displayBad.length ? displayBad.map(x=>`<li>${x}</li>`).join('') : '<li>No major red flags detected.</li>';
+      
+      const qBox = document.getElementById('investorQuotes');
+      qBox.innerHTML = '';
+      
+      game.currentGame.boardIds.forEach(id => {
+          const inv = INVESTORS.find(i => i.id === id);
+          const s = game.investorStates[id].score;
+          let quote = "";
+          
+          if(s < 20) quote = "I am very disappointed. This is not for me.";
+          else if(s >= 20 && s < 40) quote = "I am not convinced.";
+          else if(s >= 40 && s < 60) quote = "Not too sure, I need more elaboration.";
+          else if(s >= 60 && s < 80) quote = "Sounds promising.";
+          else if(s >= 80) quote = "Let's go for it, sounds lovely!";
+
+          qBox.innerHTML += `<div class="metric-tile" style="text-align:left">
+            <div class="tooltip-text">
+                <strong>${inv.name}</strong><br>
+                <span style="color:var(--accent-light)">${inv.needs}</span><br>
+                👍 Likes: ${inv.traits.join(', ')}<br>
+                👎 Hates: ${inv.hate.join(', ')}
+            </div>
+            <span style="color:${inv.color}"><strong>${inv.name}</strong> (${s}%)</span><br>
+            <small style="font-style:italic">"${quote}"</small>
+          </div>`;
+      });
+
+      const btnReport = document.getElementById('btnReport');
+      if(avgScore < 40) {
+          btnReport.style.display = 'inline-block';
+          document.getElementById('reportList').innerHTML = `<li>Your engagement dropped critically low.</li><li>Investors felt ignored. Match traits better.</li><li>Avoid vague answers.</li>`;
+      } else {
+          btnReport.style.display = 'none';
+      }
+      
+      if(avgScore >= 100) {
+          document.getElementById('modal-win').classList.add('active');
+          game.currentGame.completed = true;
+          game.saveGame(true); 
+      }
+  },
+  
+  nextRound: () => {
+      game.currentGame.round++;
+      game.rollBoard(); // Re-roll investors for the new round
+      game.resetDeck();
+      document.getElementById('progFill').style.width = '0%';
+      document.getElementById('engFill').style.width = '0%';
+      game.switchScreen('screen-craft');
+  },
+
+  /* Utilities */
+  claimReward: () => {
+      game.users[game.currentUserIndex].totalPoints += 100;
+      document.getElementById('totalScoreDisplay').innerText = game.users[game.currentUserIndex].totalPoints;
+      game.saveSystem();
+      document.getElementById('modal-reward').classList.remove('active');
+  },
+
+  endGameWin: () => {
+      document.getElementById('modal-win').classList.remove('active');
+      game.showGameList();
+  },
+  
+  openReport: () => document.getElementById('modal-report').classList.add('active'),
+
+  /* Skill tree */
+  promptSkillTree: () => {
+      const user = game.users[game.currentUserIndex];
+      // Check if already unlocked
+      if(user.unlockedTree) {
+          // Skip payment prompt, go straight to view
+          game.showSkillTreeDirectly();
+      } else {
+          // Show payment prompt
+          document.getElementById('stCurrentPoints').innerText = user.totalPoints;
+          const btn = document.getElementById('btnUnlockTree');
+          if(user.totalPoints >= 500) {
+              btn.disabled = false;
+              btn.innerText = "Unlock (-500)";
+          } else {
+              btn.disabled = true;
+              btn.innerText = "Need 500 pts";
+          }
+          document.getElementById('modal-skill-prompt').classList.add('active');
+      }
+  },
+
+  unlockSkillTree: () => {
+      game.users[game.currentUserIndex].totalPoints -= 500;
+      // Set persistent flag
+      game.users[game.currentUserIndex].unlockedTree = true;
+      
+      document.getElementById('totalScoreDisplay').innerText = game.users[game.currentUserIndex].totalPoints;
+      game.saveSystem();
+      document.getElementById('modal-skill-prompt').classList.remove('active');
+      
+      game.showSkillTreeDirectly();
+  },
+
+  // Helper to show tree without payment logic
+  showSkillTreeDirectly: () => {
+      const tree = document.getElementById('skillTreeList');
+      tree.innerHTML = '';
+      const skills = game.users[game.currentUserIndex].skills;
+      Object.entries(skills).forEach(([k,v]) => {
+          tree.innerHTML += `
+            <div class="skill">
+                <span style="text-transform:capitalize">${k}</span>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div class="progress"><div class="p" style="width:${(v/20)*100}%"></div></div>
+                    <small>Lvl ${v}</small>
+                </div>
+            </div>`;
+      });
+      document.getElementById('modal-skill-view').classList.add('active');
+  },
+
+  /* Analytics Dashboard */
+  openAnalytics: () => {
+      document.getElementById('modal-skill-view').classList.remove('active');
+      game.switchScreen('screen-analytics');
+      
+      const hist = game.currentGame.history;
+      const rounds = hist.length;
+      
+      document.getElementById('anRounds').innerText = rounds;
+      const avg = rounds ? Math.round(hist.reduce((a,b)=>a+b.score,0)/rounds) : 0;
+      document.getElementById('anAvg').innerText = avg;
+      const best = rounds ? Math.max(...hist.map(x=>x.score)) : 0;
+      document.getElementById('anBest').innerText = best;
+      
+      const trend = (rounds > 1 && hist[rounds-1].score > hist[rounds-2].score) ? '📈 Up' : (rounds > 1 ? '📉 Down' : '-');
+      document.getElementById('anTrend').innerText = trend;
+
+      const lc = document.getElementById('lineChart');
+      // Reset chart but keep background lines
+      const bgLines = `
+          <div style="position:absolute; bottom:0; width:100%; border-bottom:1px solid var(--border); font-size:10px; color:var(--muted);">0%</div>
+          <div style="position:absolute; bottom:25%; width:100%; border-bottom:1px dashed rgba(255,255,255,0.1); font-size:10px; color:var(--muted);">25%</div>
+          <div style="position:absolute; bottom:50%; width:100%; border-bottom:1px dashed rgba(255,255,255,0.1); font-size:10px; color:var(--muted);">50%</div>
+          <div style="position:absolute; bottom:75%; width:100%; border-bottom:1px dashed rgba(255,255,255,0.1); font-size:10px; color:var(--muted);">75%</div>
+          <div style="position:absolute; top:0; width:100%; border-bottom:1px dashed rgba(255,255,255,0.1); font-size:10px; color:var(--muted);">100%</div>
+      `;
+      lc.innerHTML = bgLines;
+
+      // Plot points if history exists
+      if(rounds > 0) {
+          hist.forEach((h, i, arr) => {
+              const pct = h.score;
+              // Distribute dots evenly across width
+              const left = (i / (arr.length - 1 || 1)) * 90 + 5; 
+              
+              lc.innerHTML += `
+                <div class="line-point" style="bottom:${pct}%; left:${left}%;" title="Round ${h.round}: ${h.score}%">
+                    <div class="line-score-label">${h.score}</div>
+                    <div class="line-label">R${h.round}</div>
+                </div>`;
+          });
+      } else {
+          lc.innerHTML += '<div style="width:100%; text-align:center; color:var(--muted); position:absolute; top:50%;">No pitch data yet. Complete a round!</div>';
+      }
+  },
+
+  closeAnalytics: () => game.switchScreen('screen-feedback'),
+
+  /* Save the game state */
+  promptSave: () => document.getElementById('modal-save').classList.add('active'),
+  
+  saveGame: (markCompleted = false) => {
+      if(!game.currentGame) return;
+      const user = game.users[game.currentUserIndex];
+      const existingIdx = user.savedGames.findIndex(g => g.id === game.currentGame.id);
+      
+      if(existingIdx > -1) {
+          user.savedGames[existingIdx] = game.currentGame;
+      } else {
+          user.savedGames.push(game.currentGame);
+      }
+      
+      game.saveSystem();
+      document.getElementById('modal-save').classList.remove('active');
+      if(!markCompleted) alert("Game Saved!");
+  },
+
+  saveSystem: () => {
+      localStorage.setItem('pitchGameUsers', JSON.stringify(game.users));
+  },
+
+  switchScreen: (id) => {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      if(id === 'screen-login' || id === 'screen-games-list') document.getElementById('gameHeader').style.display = 'none';
+  },
+  
+  openHelp: () => document.getElementById('modal-help').classList.add('active'),
+  closeModal: (id) => document.getElementById(id).classList.remove('active'),
+  getColor: (val) => {
+      if(val >= 80) return 'var(--c-green)';
+      if(val >= 60) return 'var(--c-lgreen)';
+      if(val >= 40) return 'var(--c-yellow)';
+      if(val >= 20) return 'var(--c-orange)';
+      return 'var(--c-red)';
+  }
+};
+
+game.init();
+</script>
+</body>
+</html>
